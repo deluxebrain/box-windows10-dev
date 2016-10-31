@@ -1,0 +1,102 @@
+{
+  "builders": [{
+    "type": "vmware-iso",
+    "communicator": "winrm",
+    "iso_url": "{{user `iso_url`}}",
+    "iso_checksum_type": "{{user `iso_checksum_type`}}",
+    "iso_checksum": "{{user `iso_checksum`}}",
+    "headless": false,
+    "boot_wait": "2m",
+    "winrm_username": "vagrant",
+    "winrm_password": "vagrant",
+    "winrm_timeout": "5h",
+    "shutdown_command": "shutdown /s /t 10 /f /d p:4:1 /c \"Packer Shutdown\"",
+    "guest_os_type": "windows9-64",
+    "tools_upload_flavor": "windows",
+    "tools_upload_path": "c:/Windows/Temp/windows.iso",
+    "disk_size": 61440,
+    "vnc_port_min": 5900,
+    "vnc_port_max": 5980,
+    "floppy_files": [
+      "./Autounattend.xml",
+      "./scripts/update-windows.ps1",
+      "./scripts/configure-winrm.ps1"
+    ],
+    "vmx_data": {
+      "RemoteDisplay.vnc.enabled": "false",
+      "RemoteDisplay.vnc.port": "5900",
+      "memsize": "2048",
+      "numvcpus": "2",
+      "scsi0.virtualDev": "lsisas1068"
+    }
+  }, {
+    "type": "virtualbox-iso",
+    "communicator": "winrm",
+    "iso_url": "{{user `iso_url`}}",
+    "iso_checksum_type": "{{user `iso_checksum_type`}}",
+    "iso_checksum": "{{user `iso_checksum`}}",
+    "headless": false,
+    "boot_wait": "2m",
+    "winrm_username": "vagrant",
+    "winrm_password": "vagrant",
+    "winrm_timeout": "2h",
+    "shutdown_command": "shutdown /s /t 10 /f /d p:4:1 /c \"Packer Shutdown\"",
+    "guest_os_type": "Windows10_64",
+    "guest_additions_mode": "upload",
+    "guest_additions_path": "c:/Windows/Temp/windows.iso",
+    "disk_size": 61440,
+    "floppy_files": [
+      "./Autounattend.xml",
+      "./scripts/update-windows.ps1",
+      "./scripts/configure-winrm.ps1"
+    ],
+    "vboxmanage": [
+      [
+        "modifyvm",
+        "{{.Name}}",
+        "--memory",
+        "2048"
+      ],
+      [
+        "modifyvm",
+        "{{.Name}}",
+        "--cpus",
+        "2"
+      ]
+    ]
+  }],
+  "provisioners": [{
+    "type": "powershell",
+    "execute_command": "powershell -ExecutionPolicy Bypass \"& { {{.Vars}}{{.Path}}; exit $LastExitCode }\"",
+    "scripts": [
+      "./scripts/install-guest-tools.ps1",
+      "./scripts/enable-rdp.ps1",
+      "./scripts/disable-hibernate.ps1",
+      "./scripts/disable-autologin.ps1",
+      "./scripts/enable-uac.ps1",
+      "./scripts/no-expiration.ps1",
+      "./scripts/Enable-UbuntuForWindows.ps1"
+    ]
+  }, {
+    "type": "windows-restart",
+    "restart_command": "powershell \"& {(Get-WmiObject win32_operatingsystem).LastBootUpTime > C:\\ProgramData\\lastboot.txt; Restart-Computer -force}\"",
+    "restart_check_command": "powershell -command \"& {if ((get-content C:\\ProgramData\\lastboot.txt) -eq (Get-WmiObject win32_operatingsystem).LastBootUpTime) {Write-Output 'Sleeping for 600 seconds to wait for reboot'; start-sleep 600} else {Write-Output 'Reboot complete'}}\""
+  }, {
+    "type": "powershell",
+    "execute_command": "powershell -ExecutionPolicy Bypass \"& { {{.Vars}}{{.Path}}; exit $LastExitCode }\"",
+    "scripts": [
+      "./scripts/Install-UbuntuForWindows.ps1"
+    ]
+  }],
+  "post-processors": [{
+    "type": "vagrant",
+    "keep_input_artifact": false,
+    "output": "/var/media/images/vagrant/{{.Provider}}/windows_10.box",
+    "vagrantfile_template": "vagrantfile.template"
+  }],
+  "variables": {
+    "iso_checksum_type": "sha1",
+    "iso_checksum": "89e44da5d62a1509786cedd5cd999ba5fc97e52e",
+    "autounattend": "Autounattend.xml"
+  }
+}
