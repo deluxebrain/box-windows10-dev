@@ -1,0 +1,77 @@
+{
+  "variables": {
+    "images_path": "/var/media/images",
+    "source_name": "windows_10_basebox"
+  },
+  "builders": [{
+    "type": "vmware-iso",
+    "communicator": "winrm",
+    "source_path": "{{user `images_path`}}/vmware/{{user `source_name}}/vm.vmx",
+    "headless": false,
+    "boot_wait": "2m",
+    "winrm_username": "vagrant",
+    "winrm_password": "vagrant",
+    "winrm_timeout": "5h",
+    "shutdown_command": "shutdown /s /t 10 /f /d p:4:1 /c \"Packer Shutdown\"",
+    "guest_os_type": "windows9-64",
+    "disk_size": 61440,
+    "vnc_port_min": 5900,
+    "vnc_port_max": 5980,
+    "vmx_data": {
+      "RemoteDisplay.vnc.enabled": "false",
+      "RemoteDisplay.vnc.port": "5900",
+      "memsize": "2048",
+      "numvcpus": "2",
+      "scsi0.virtualDev": "lsisas1068"
+    }
+  }, {
+    "type": "virtualbox-iso",
+    "communicator": "winrm",
+    "source_path": "{{user `images_path`}}/virtualbox/{{user `source_name`}}/vm.ovf",
+    "headless": false,
+    "boot_wait": "2m",
+    "winrm_username": "vagrant",
+    "winrm_password": "vagrant",
+    "winrm_timeout": "2h",
+    "shutdown_command": "shutdown /s /t 10 /f /d p:4:1 /c \"Packer Shutdown\"",
+    "guest_os_type": "Windows10_64",
+    "disk_size": 61440,
+    "vboxmanage": [
+      [
+        "modifyvm",
+        "{{.Name}}",
+        "--memory",
+        "2048"
+      ],
+      [
+        "modifyvm",
+        "{{.Name}}",
+        "--cpus",
+        "2"
+      ]
+    ]
+  }],
+  "provisioners": [{
+    "type": "powershell",
+    "execute_command": "powershell -ExecutionPolicy Bypass \"& { {{.Vars}}{{.Path}}; exit $LastExitCode }\"",
+    "scripts": [
+      "./scripts/Enable-UbuntuForWindows.ps1"
+    ]
+  }, {
+    "type": "windows-restart",
+    "restart_command": "powershell \"& {(Get-WmiObject win32_operatingsystem).LastBootUpTime > C:\\ProgramData\\lastboot.txt; Restart-Computer -force}\"",
+    "restart_check_command": "powershell -command \"& {if ((get-content C:\\ProgramData\\lastboot.txt) -eq (Get-WmiObject win32_operatingsystem).LastBootUpTime) {Write-Output 'Sleeping for 600 seconds to wait for reboot'; start-sleep 600} else {Write-Output 'Reboot complete'}}\""
+  }, {
+    "type": "powershell",
+    "execute_command": "powershell -ExecutionPolicy Bypass \"& { {{.Vars}}{{.Path}}; exit $LastExitCode }\"",
+    "scripts": [
+      "./scripts/Install-UbuntuForWindows.ps1"
+    ]
+  }],
+  "post-processors": [{
+    "type": "vagrant",
+    "keep_input_artifact": false,
+    "output": "{{user `images_path`}}/vagrant/{{.Provider}}/windows_10_devbox.box",
+    "vagrantfile_template": "vagrantfile.template"
+  }]
+}
