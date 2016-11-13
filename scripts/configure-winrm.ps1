@@ -1,9 +1,12 @@
+# Trouble shooting WinRM
+# http://www.hurryupandwait.io/blog/understanding-and-troubleshooting-winrm-connection-and-authentication-a-thrill-seekers-guide-to-adventure
+
 # Supress network location Prompt
 New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Network\NewNetworkWindowOff" -Force
 
 # Set network to private
 $ifaceinfo = Get-NetConnectionProfile
-Set-NetConnectionProfile -InterfaceIndex $ifaceinfo.InterfaceIndex -NetworkCategory Private 
+Set-NetConnectionProfile -InterfaceIndex $ifaceinfo.InterfaceIndex -NetworkCategory Private
 
 # Set up WinRM and configure some things
 winrm quickconfig -q

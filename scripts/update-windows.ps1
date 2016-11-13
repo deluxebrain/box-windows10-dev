@@ -3,7 +3,9 @@ param($global:RestartRequired=0,
         $global:MaxCycles=5,
         $MaxUpdatesPerCycle=500)
 
-$Logfile = "C:\Windows\Temp\win-updates.log"
+$Logfile = "C:\Windows\Temp\provision.log"
+
+Set-ExecutionPolicy Unrestricted -Force
 
 function LogWrite {
    Param ([string]$logstring)
@@ -230,3 +232,4 @@ if ($global:MoreUpdates -eq 1) {
 } else {
     Check-ContinueRestartOrEnd
 }
+

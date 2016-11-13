@@ -8,9 +8,9 @@
   },
   "builders": [{
     "type": "vmware-iso",
-    "communicator": "winrm",
     "vm_name": "vm",
     "output_directory": "{{user `images_path`}}/vmware/{{user `name`}}",
+    "communicator": "winrm",
     "iso_url": "{{user `iso_url`}}",
     "iso_checksum_type": "{{user `iso_checksum_type`}}",
     "iso_checksum": "{{user `iso_checksum`}}",
@@ -40,9 +40,9 @@
     }
   }, {
     "type": "virtualbox-iso",
-    "communicator": "winrm",
     "vm_name": "vm",
     "output_directory": "{{user `images_path`}}/virtualbox/{{user `name`}}",
+    "communicator": "winrm",
     "iso_url": "{{user `iso_url`}}",
     "iso_checksum_type": "{{user `iso_checksum_type`}}",
     "iso_checksum": "{{user `iso_checksum`}}",
@@ -85,7 +85,14 @@
       "./scripts/disable-hibernate.ps1",
       "./scripts/disable-autologin.ps1",
       "./scripts/enable-uac.ps1",
-      "./scripts/no-expiration.ps1"
+      "./scripts/no-expiration.ps1",
+      "./scripts/Enable-UbuntuForWindows.ps1"
     ]
+  }],
+  "post-processors": [{
+    "type": "vagrant",
+    "keep_input_artifact": false,
+    "output": "{{user `images_path`}}/vagrant/{{.Provider}}/windows_10_basebox.box",
+    "vagrantfile_template": "./vagrantfile.template"
   }]
 }
